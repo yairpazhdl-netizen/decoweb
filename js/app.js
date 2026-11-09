@@ -5,6 +5,7 @@ const D=await cargar();
 const folio="COT-"+new Date().toISOString().slice(2,10).replace(/-/g,"")+"-"+(Math.floor(Math.random()*900)+100);
 let filtro="Todos",pre=null;
 $("#neg").textContent=D.negocio;document.title=D.negocio;
+const lg=$("#logo");lg.onload=()=>{lg.hidden=false};lg.onerror=()=>lg.remove();lg.src=D.logo||"img/logo.png";
 document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>goto(b.dataset.v));
 function goto(v){
   ["cat","cot"].forEach(k=>$("#"+k).classList.toggle("hide",k!==v));
