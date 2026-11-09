@@ -42,8 +42,7 @@ function rCot(){
   <div><label for="fec">Fecha</label><input id="fec" type="date"></div></div>
   <label for="zona">Lugar del evento</label><select id="zona">${D.zonas.map((z,i)=>`<option value="${i}">${z.n}</option>`).join("")}</select></fieldset>
   <fieldset><legend>Paquete</legend>${D.paquetes.map((p,i)=>`<label class="opt"><input type="radio" name="paq" value="${i}" ${i===0?"checked":""}><span><b>${p.n}</b> ${fmt(p.p)}<small>${p.inc}</small></span></label>`).join("")}</fieldset>
-  <fieldset><legend>Extras</legend>${D.extras.map((x,i)=>`<label class="opt"><input type="checkbox" id="x${i}"><span>${x.n} <b>${fmt(x.p)}</b></span></label>`).join("")}
-  <label class="opt"><input type="checkbox" id="iva"><span>Incluir IVA (${D.iva}%)</span></label></fieldset>
+  <fieldset><legend>Extras</legend>${D.extras.map((x,i)=>`<label class="opt"><input type="checkbox" id="x${i}"><span>${x.n} <b>${fmt(x.p)}</b></span></label>`).join("")}</fieldset>
   </form><aside id="res" aria-live="polite"></aside></div>`;
   if(pre)$("#evt").value=pre;pre=null;
   $("#cot form").addEventListener("input",calc);calc();
@@ -53,7 +52,7 @@ function calc(){
   const L=[[`Paquete ${p.n}`,p.p]];
   D.extras.forEach((x,i)=>{if($("#x"+i).checked)L.push([x.n,x.p])});
   if(z.p)L.push([`Traslado: ${z.n}`,z.p]);
-  const sub=L.reduce((a,l)=>a+l[1],0),iva=$("#iva").checked?sub*D.iva/100:0,tot=sub+iva,ant=tot*D.anticipo/100;
+  const sub=L.reduce((a,l)=>a+l[1],0),iva=0,tot=sub+iva,ant=tot*D.anticipo/100;
   const f=$("#fec").value,fd=f?new Date(f+"T00:00").toLocaleDateString("es-MX",{day:"numeric",month:"long",year:"numeric"}):"Por definir";
   const cli=$("#cli").value.trim()||"Cliente",evt=$("#evt").value;
   const txt=`Cotización ${folio} (${D.negocio})\nCliente: ${cli}\nEvento: ${evt}, ${fd}\n`+L.map(l=>`- ${l[0]}: ${fmt(l[1])}`).join("\n")+(iva?`\nIVA: ${fmt(iva)}`:"")+`\nTotal: ${fmt(tot)}\nAnticipo (${D.anticipo}%): ${fmt(ant)}`;
