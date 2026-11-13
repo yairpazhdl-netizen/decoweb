@@ -3,7 +3,7 @@ import {cargar,fmt,aplicarTema} from "./datos.js";
 const $=s=>document.querySelector(s);
 const D=await cargar();
 const folio="COT-"+new Date().toISOString().slice(2,10).replace(/-/g,"")+"-"+(Math.floor(Math.random()*900)+100);
-let filtro="Todos",pre=null;
+let filtro="Todos",pre=null,busq="";
 const nz=s=>s.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
 const desde=m=>{const v=D.paquetes.filter(p=>!p.e||p.e===m.e).map(p=>p.p);return v.length?Math.min(...v):m.p};
 aplicarTema(D.tema);$("#neg").textContent=D.negocio;document.title=D.negocio;
@@ -15,14 +15,21 @@ function goto(v){
   v==="cat"?rCat():rCot();scrollTo(0,0);
 }
 function rCat(){
-  const list=D.montajes.filter(m=>filtro==="Todos"||m.e===filtro);
-  $("#cat").innerHTML=`<div class="chips">${["Todos",...D.eventos].map(e=>`<button class="chip" aria-pressed="${e===filtro}" data-e="${e}">${e}</button>`).join("")}</div>
+  if(!$("#q")){
+    $("#cat").innerHTML=`<div style="margin-top:20px"><label for="q">Buscar estilo o categoría</label><input id="q" type="search" placeholder="Ej. boda, princesa, unicornio" autocomplete="off"></div><div id="cg"></div>`;
+    $("#q").addEventListener("input",()=>{busq=$("#q").value;pinta()});
+  }
+  pinta();
+}
+function pinta(){
+  const q=nz(busq.trim()),list=D.montajes.filter(m=>(filtro==="Todos"||m.e===filtro)&&(!q||nz(m.n+" "+m.e+" "+m.d).includes(q)));
+  $("#cg").innerHTML=`<div class="chips">${["Todos",...D.eventos].map(e=>`<button class="chip" aria-pressed="${e===filtro}" data-e="${e}">${e}</button>`).join("")}</div>
   <div class="grid">${list.map(m=>`<article class="tile"><div class="pic" style="background:linear-gradient(135deg,${m.c[0]},${m.c[1]})">${m.i}</div>
   <div class="b"><h3>${m.n}</h3><p>${m.e}. ${m.d}</p><span class="pr">Desde ${fmt(desde(m))}</span>
-  <div class="acts" style="margin:0"><button class="btn alt" data-m="${D.montajes.indexOf(m)}">Ver más</button><button class="btn" data-e="${m.e}" data-go="1">Cotizar</button></div></div></article>`).join("")||'<p class="note">Aún no hay estilos para este evento.</p>'}</div>`;
-  $("#cat").querySelectorAll(".chip").forEach(b=>b.onclick=()=>{filtro=b.dataset.e;rCat()});
-  $("#cat").querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>{pre=b.dataset.e;goto("cot")});
-  $("#cat").querySelectorAll("[data-m]").forEach(b=>b.onclick=()=>modal(+b.dataset.m));
+  <div class="acts" style="margin:0"><button class="btn alt" data-m="${D.montajes.indexOf(m)}">Ver más</button><button class="btn" data-e="${m.e}" data-go="1">Cotizar</button></div></div></article>`).join("")||'<p class="note">No encontré estilos con esa búsqueda.</p>'}</div>`;
+  $("#cg").querySelectorAll(".chip").forEach(b=>b.onclick=()=>{filtro=b.dataset.e;rCat()});
+  $("#cg").querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>{pre=b.dataset.e;goto("cot")});
+  $("#cg").querySelectorAll("[data-m]").forEach(b=>b.onclick=()=>modal(+b.dataset.m));
 }
 async function modal(i){
   const m=D.montajes[i];
