@@ -1,10 +1,12 @@
 import {db,collection,getDocs,query,where} from "./firebase.js";
-import {cargar,fmt} from "./datos.js";
+import {cargar,fmt,aplicarTema} from "./datos.js";
 const $=s=>document.querySelector(s);
 const D=await cargar();
 const folio="COT-"+new Date().toISOString().slice(2,10).replace(/-/g,"")+"-"+(Math.floor(Math.random()*900)+100);
 let filtro="Todos",pre=null;
-$("#neg").textContent=D.negocio;document.title=D.negocio;
+const nz=s=>s.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
+const desde=m=>{const v=D.paquetes.filter(p=>!p.e||p.e===m.e).map(p=>p.p);return v.length?Math.min(...v):m.p};
+aplicarTema(D.tema);$("#neg").textContent=D.negocio;document.title=D.negocio;
 const lg=$("#logo");lg.onload=()=>{lg.hidden=false};lg.onerror=()=>lg.remove();lg.src=D.logo||"img/logo.png";
 document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>goto(b.dataset.v));
 function goto(v){
@@ -16,7 +18,7 @@ function rCat(){
   const list=D.montajes.filter(m=>filtro==="Todos"||m.e===filtro);
   $("#cat").innerHTML=`<div class="chips">${["Todos",...D.eventos].map(e=>`<button class="chip" aria-pressed="${e===filtro}" data-e="${e}">${e}</button>`).join("")}</div>
   <div class="grid">${list.map(m=>`<article class="tile"><div class="pic" style="background:linear-gradient(135deg,${m.c[0]},${m.c[1]})">${m.i}</div>
-  <div class="b"><h3>${m.n}</h3><p>${m.e}. ${m.d}</p><span class="pr">Desde ${fmt(m.p)}</span>
+  <div class="b"><h3>${m.n}</h3><p>${m.e}. ${m.d}</p><span class="pr">Desde ${fmt(desde(m))}</span>
   <div class="acts" style="margin:0"><button class="btn alt" data-m="${D.montajes.indexOf(m)}">Ver más</button><button class="btn" data-e="${m.e}" data-go="1">Cotizar</button></div></div></article>`).join("")||'<p class="note">Aún no hay estilos para este evento.</p>'}</div>`;
   $("#cat").querySelectorAll(".chip").forEach(b=>b.onclick=()=>{filtro=b.dataset.e;rCat()});
   $("#cat").querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>{pre=b.dataset.e;goto("cot")});
@@ -26,7 +28,7 @@ async function modal(i){
   const m=D.montajes[i];
   const ph=[135,45,225,315].map(a=>`<div class="ph" style="background:linear-gradient(${a}deg,${m.c[0]},${m.c[1]})">${m.i}<small>Foto próximamente</small></div>`).join("");
   const o=document.createElement("div");o.className="ov";o.setAttribute("role","dialog");o.setAttribute("aria-modal","true");o.setAttribute("aria-label",m.n);
-  o.innerHTML=`<div class="mod"><button class="btn alt cl" type="button">Cerrar</button><h2>${m.n}</h2><p class="note">${m.e}</p><p>${m.d}</p><p class="pr">Desde ${fmt(m.p)}</p><div class="gal">${ph}</div><div class="acts"><button class="btn go" type="button">Cotizar este estilo</button></div></div>`;
+  o.innerHTML=`<div class="mod"><button class="btn alt cl" type="button">Cerrar</button><h2>${m.n}</h2><p class="note">${m.e}</p><p>${m.d}</p><p class="pr">Desde ${fmt(desde(m))}</p><div class="gal">${ph}</div><div class="acts"><button class="btn go" type="button">Cotizar este estilo</button></div></div>`;
   const x=()=>{o.remove();document.removeEventListener("keydown",k)},k=e=>{if(e.key==="Escape")x()};
   o.onclick=e=>{if(e.target===o)x()};o.querySelector(".cl").onclick=x;
   o.querySelector(".go").onclick=()=>{x();pre=m.e;goto("cot")};
@@ -39,17 +41,31 @@ async function modal(i){
 function rCot(){
   $("#cot").innerHTML=`<div class="cols"><form onsubmit="return false">
   <fieldset><legend>Tu evento</legend><label for="cli">Nombre del cliente</label><input id="cli" autocomplete="off">
-  <div class="two"><div><label for="evt">Tipo de evento</label><select id="evt">${D.eventos.map(e=>`<option>${e}</option>`).join("")}</select></div>
+  <label for="bus">Buscar categoría o estilo</label><input id="bus" type="search" placeholder="Ej. boda, XV años, unicornio" autocomplete="off"><p id="busn" class="note" role="status"></p><div class="two"><div><label for="evt">Tipo de evento</label><select id="evt">${D.eventos.map(e=>`<option>${e}</option>`).join("")}</select></div>
   <div><label for="fec">Fecha</label><input id="fec" type="date"></div></div>
   <label for="zona">Lugar del evento</label><select id="zona">${D.zonas.map((z,i)=>`<option value="${i}">${z.n}</option>`).join("")}</select></fieldset>
-  <fieldset><legend>Paquete</legend>${D.paquetes.map((p,i)=>`<label class="opt"><input type="radio" name="paq" value="${i}" ${i===0?"checked":""}><span><b>${p.n}</b> ${fmt(p.p)}<small>${p.inc}</small></span></label>`).join("")}</fieldset>
+  <fieldset><legend>Paquete</legend><div id="pq"></div></fieldset>
   <fieldset><legend>Extras</legend>${D.extras.map((x,i)=>`<label class="opt"><input type="checkbox" id="x${i}"><span>${x.n} <b>${fmt(x.p)}</b></span></label>`).join("")}</fieldset>
   </form><aside id="res" aria-live="polite"></aside></div>`;
-  if(pre)$("#evt").value=pre;pre=null;
+  if(pre)$("#evt").value=pre;pre=null;paq();$("#evt").addEventListener("input",paq);
+  $("#bus").addEventListener("input",()=>{
+    const q=nz($("#bus").value.trim()),ev=$("#evt"),act=ev.value;
+    const l=D.eventos.filter(e=>nz(e).includes(q)||D.montajes.some(m=>m.e===e&&nz(m.n).includes(q)));
+    $("#busn").textContent=l.length?"":"No hay categorías con ese nombre.";
+    ev.innerHTML=(l.length?l:D.eventos).map(e=>`<option${e===act?" selected":""}>${e}</option>`).join("");
+    ev.dispatchEvent(new Event("input",{bubbles:true}));
+  });
   $("#cot form").addEventListener("input",calc);calc();
 }
+function paq(){
+  const ev=$("#evt").value;
+  $("#pq").innerHTML=D.paquetes.map((p,i)=>(!p.e||p.e===ev)?`<label class="opt"><input type="radio" name="paq" value="${i}"><span><b>${p.n}</b> ${fmt(p.p)}<small>${p.inc}</small></span></label>`:"").join("")||'<p class="note">Aún no hay paquetes para este evento.</p>';
+  const r=document.querySelector("[name=paq]");if(r)r.checked=true;
+}
 function calc(){
-  const p=D.paquetes[+document.querySelector("[name=paq]:checked").value],z=D.zonas[+$("#zona").value];
+  const sel=document.querySelector("[name=paq]:checked");
+  if(!sel){$("#res").innerHTML='<p class="note">Todavía no hay paquetes para este tipo de evento.</p>';return}
+  const p=D.paquetes[+sel.value],z=D.zonas[+$("#zona").value];
   const L=[[`Paquete ${p.n}`,p.p]];
   D.extras.forEach((x,i)=>{if($("#x"+i).checked)L.push([x.n,x.p])});
   if(z.p)L.push([`Traslado: ${z.n}`,z.p]);
