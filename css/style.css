@@ -50,4 +50,6 @@ td:last-child{text-align:right;white-space:nowrap;padding-left:10px}
 @media print{body *{visibility:hidden}#res,#res *{visibility:visible}#res{position:absolute;left:0;top:0;width:100%;border:0}.acts{display:none}}
 .brand{display:flex;align-items:center;gap:14px}
 .brand img{height:68px;width:auto;max-width:140px;object-fit:contain}
- 
+.card{border:1px solid var(--line);border-radius:6px;background:var(--sf);padding:6px 14px 10px;margin-bottom:12px}
+.card .it{border-bottom:0}
+.card summary{cursor:pointer;padding:8px 0}
