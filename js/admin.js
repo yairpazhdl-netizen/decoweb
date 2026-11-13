@@ -4,7 +4,7 @@ const $=s=>document.querySelector(s);
 const esc=s=>String(s??"").replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;");
 const L={paquetes:["n","p","e","inc"],extras:["n","p"],zonas:["n","p"],montajes:["n","e","d","i"]};
 const T={n:"Nombre",p:"Precio",inc:"Qué incluye",e:"Tipo de evento",d:"Descripción",i:"Emoji"};
-const GEN={negocio:"Nombre del negocio",tel:"WhatsApp (código de país, solo números)",anticipo:"Anticipo (%)"};
+const GEN={negocio:"Nombre del negocio",tel:"WhatsApp (código de país, solo números)",anticipo:"Anticipo (%)",horaExtra:"Costo por hora extra si se prolonga el evento (0 para no mostrar monto)"};
 const TABS=[["gen","General"],["paq","Paquetes"],["ext","Extras y traslado"],["est","Estilos y fotos"],["cal","Calendario"],["col","Logo y colores"]];
 const NEW={
  paquetes:()=>({n:"Nuevo paquete",e:evSel,p:0,inc:""}),extras:()=>({n:"Nuevo extra",p:0}),zonas:()=>({n:"Nueva zona",p:0}),

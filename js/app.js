@@ -51,7 +51,7 @@ function rCot(){
   <label for="bus">Buscar categoría o estilo</label><input id="bus" type="search" placeholder="Ej. boda, XV años, unicornio" autocomplete="off"><p id="busn" class="note" role="status"></p><div class="two"><div><label for="evt">Tipo de evento</label><select id="evt">${D.eventos.map(e=>`<option>${e}</option>`).join("")}</select></div>
   <div><label for="est">Estilo</label><select id="est"></select></div></div>
   <label>Fecha del evento</label><div id="cal"></div><p id="ocup" class="aviso" role="status"></p>
-  <label for="zona">Lugar del evento</label><select id="zona">${D.zonas.map((z,i)=>`<option value="${i}">${z.n}</option>`).join("")}</select></fieldset>
+  <div class="two"><div><label for="zona">Lugar del evento</label><select id="zona">${D.zonas.map((z,i)=>`<option value="${i}">${z.n}</option>`).join("")}</select></div><div><label for="dur">Duración del evento (horas)</label><input id="dur" type="number" min="1" max="24" step="0.5" value="4"></div></div></fieldset>
   <fieldset><legend>Paquete</legend><div id="pq"></div></fieldset>
   <fieldset><legend>Extras</legend>${D.extras.map((x,i)=>`<label class="opt"><input type="checkbox" id="x${i}"><span>${x.n} <b>${fmt(x.p)}</b></span></label>`).join("")}</fieldset>
   </form><aside id="res" aria-live="polite"></aside></div>`;
@@ -86,10 +86,12 @@ function calc(){
   const sub=L.reduce((a,l)=>a+l[1],0),iva=0,tot=sub+iva,ant=tot*D.anticipo/100;
   const f=fecha,fd=f?new Date(f+"T00:00").toLocaleDateString("es-MX",{day:"numeric",month:"long",year:"numeric"}):"Por definir";
   const cli=$("#cli").value.trim()||"Cliente",evt=$("#evt").value,es=D.montajes.find(m=>m.id===$("#est").value),oc=!!f&&(D.ocupadas||[]).includes(f);
-  const txt=`Cotización ${folio} (${D.negocio})\nCliente: ${cli}\nEvento: ${evt}${es?`, estilo ${es.n}`:""}, ${fd}\n`+L.map(l=>`- ${l[0]}: ${fmt(l[1])}`).join("\n")+(iva?`\nIVA: ${fmt(iva)}`:"")+`\nTotal: ${fmt(tot)}\nAnticipo (${D.anticipo}%): ${fmt(ant)}${oc?"\nAviso: la fecha aparece como ocupada, quiero consultar disponibilidad.":""}`;
+  const h=+$("#dur").value,hs=h>0?`${String(h).replace(".",",")} ${h===1?"hora":"horas"}`:"Por definir";
+  const nota=D.horaExtra>0?`Se cobrará un extra de ${fmt(D.horaExtra)} por cada hora que se prolongue el evento y retrase el desmontaje.`:"Se cobrará un extra por cada hora que se prolongue el evento y retrase el desmontaje.";
+  const txt=`Cotización ${folio} (${D.negocio})\nCliente: ${cli}\nEvento: ${evt}${es?`, estilo ${es.n}`:""}, ${fd}\nDuración: ${hs}\n`+L.map(l=>`- ${l[0]}: ${fmt(l[1])}`).join("\n")+(iva?`\nIVA: ${fmt(iva)}`:"")+`\nTotal: ${fmt(tot)}\nAnticipo (${D.anticipo}%): ${fmt(ant)}\nNota: ${nota}${oc?"\nAviso: la fecha aparece como ocupada, quiero consultar disponibilidad.":""}`;
   $("#ocup").textContent=oc?"Esta fecha aparece como ocupada, pero aun así puedes cotizar y preguntarnos por disponibilidad.":"";
   $("#res").innerHTML=`<h2>Cotización</h2><p class="note">${folio}. Vigencia de 15 días.</p>
-  <p><b>${cli}</b><br>${evt}${es?`: ${es.n}`:""}<br>${fd}</p>${oc?'<p class="aviso">Esta fecha aparece como ocupada. Aun así puedes enviar tu cotización y preguntar por disponibilidad.</p>':""}
+  <p><b>${cli}</b><br>${evt}${es?`: ${es.n}`:""}<br>${fd}<br>Duración del evento: ${hs}</p><p class="note">${nota}</p>${oc?'<p class="aviso">Esta fecha aparece como ocupada. Aun así puedes enviar tu cotización y preguntar por disponibilidad.</p>':""}
   <table>${L.map(l=>`<tr><td>${l[0]}</td><td>${fmt(l[1])}</td></tr>`).join("")}
   ${iva?`<tr><td>IVA (${D.iva}%)</td><td>${fmt(iva)}</td></tr>`:""}
   <tr class="tot"><td>Total</td><td>${fmt(tot)}</td></tr>

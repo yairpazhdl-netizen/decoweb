@@ -5,7 +5,7 @@ const BASE={"Boda":[9000,15000,26000],"XV años":[7500,13000,22000],"Cumpleaños
 const INC=["Backdrop y globos de ambiente","Backdrop con flores, arreglos decorativos e iluminación cálida","Ambientación completa, arco, arreglos florales, iluminación y letras"];
 const PAQ=Object.entries(BASE).flatMap(([e,ps])=>["Básico","Medio","Premium"].map((n,i)=>({e,n,p:ps[i],inc:INC[i]})));
 export const DEF={
- negocio:"Tu Negocio de Decoración",tel:"5210000000000",iva:16,anticipo:50,
+ negocio:"Tu Negocio de Decoración",tel:"5210000000000",iva:16,anticipo:50,horaExtra:500,
  eventos:["Boda","XV años","Cumpleaños","Baby shower","Bautizo","Corporativo"],
  paquetes:PAQ,
  extras:[{n:"Letras luminosas",p:1200},{n:"Mesa de dulces",p:1800},{n:"Iluminación ambiental",p:2200},{n:"Arco de globos",p:1500}],
