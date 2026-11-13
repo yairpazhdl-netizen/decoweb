@@ -53,3 +53,16 @@ td:last-child{text-align:right;white-space:nowrap;padding-left:10px}
 .card{border:1px solid var(--line);border-radius:6px;background:var(--sf);padding:6px 14px 10px;margin-bottom:12px}
 .card .it{border-bottom:0}
 .card summary{cursor:pointer;padding:8px 0}
+.aviso{background:rgba(200,140,40,.16);border-left:4px solid var(--gold);padding:8px 12px;border-radius:4px;margin:8px 0;font-size:14px}
+.aviso:empty{display:none}
+.cal{border:1px solid var(--line);border-radius:6px;padding:10px;background:var(--sf);max-width:420px}
+.calh{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.calh .btn{padding:2px 14px;font-size:20px;line-height:1.3}
+.calg{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;text-align:center}
+.calg small{color:var(--mute)}
+.dia{font:inherit;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:6px;padding:9px 0;cursor:pointer}
+.dia.oc{background:rgba(200,60,60,.2);border-color:#c84a4a;text-decoration:line-through}
+.dia.hoy{outline:2px solid var(--gold)}
+.dia.sel{background:var(--ac);color:var(--on);border-color:var(--ac)}
+.dia:disabled{opacity:.35;cursor:not-allowed}
+.dot{display:inline-block;width:10px;height:10px;border-radius:50%;background:#c84a4a;margin-right:6px}
