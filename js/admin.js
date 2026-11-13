@@ -1,15 +1,16 @@
 import {db,auth,doc,setDoc,collection,addDoc,getDocs,query,where,deleteDoc,signInWithEmailAndPassword,signOut,onAuthStateChanged} from "./firebase.js";
-import {cargar,DEF,PRESETS,aplicarTema} from "./datos.js";
+import {cargar,DEF,PRESETS,aplicarTema,calendario} from "./datos.js";
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??"").replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;");
 const L={paquetes:["n","p","e","inc"],extras:["n","p"],zonas:["n","p"],montajes:["n","e","d","i"]};
 const T={n:"Nombre",p:"Precio",inc:"Qué incluye",e:"Tipo de evento",d:"Descripción",i:"Emoji"};
 const GEN={negocio:"Nombre del negocio",tel:"WhatsApp (código de país, solo números)",anticipo:"Anticipo (%)"};
-const TABS=[["gen","General"],["paq","Paquetes"],["ext","Extras y traslado"],["est","Estilos y fotos"],["col","Logo y colores"]];
+const TABS=[["gen","General"],["paq","Paquetes"],["ext","Extras y traslado"],["est","Estilos y fotos"],["cal","Calendario"],["col","Logo y colores"]];
 const NEW={
  paquetes:()=>({n:"Nuevo paquete",e:evSel,p:0,inc:""}),extras:()=>({n:"Nuevo extra",p:0}),zonas:()=>({n:"Nueva zona",p:0}),
  montajes:()=>({id:"m"+Date.now(),n:"Nuevo estilo",e:D.eventos[0],d:"",p:0,i:"🎀",c:["#f6c4d8","#d9a3e6"]})};
-let D,tab="gen",evSel="",openId=null;
+let D,tab="gen",evSel="",openId=null,calAd;
+const lstOc=()=>(D.ocupadas||[]).map(f=>new Date(f+"T00:00").toLocaleDateString("es-MX",{day:"numeric",month:"short",year:"numeric"})).join(", ")||"Ninguna";
 const sucio=()=>{$("#st").textContent="Cambios sin guardar."};
 
 onAuthStateChanged(auth,async u=>{$("#login").hidden=!!u;$("#panel").hidden=!u;
@@ -46,12 +47,14 @@ const VISTA={
  ext:()=>lista("extras","Extras")+lista("zonas","Traslado por zona (según el lugar del evento)"),
  est:()=>`<div class="acts" style="margin:0 0 12px"><button type="button" class="btn" data-add="montajes">Agregar estilo</button></div><p class="note">Toca un estilo para editarlo y subir sus fotos. El precio “desde” sale de los paquetes.</p>`+
   D.montajes.map((m,i)=>`<details class="card" ${m.id===openId?"open":""}><summary><b>${esc(m.i)} ${esc(m.n)}</b> <span class="note">${esc(m.e)}</span></summary><div class="it">${L.montajes.map(f=>campo("montajes",i,f,m)).join("")}<button type="button" class="btn alt" data-del="montajes" data-i="${i}">Quitar estilo</button></div><label>Fotos de este estilo<input type="file" accept="image/*" multiple data-ph="${m.id}"></label><div class="th" id="th-${m.id}"></div></details>`).join(""),
+ cal:()=>`<p class="note">Toca un día para marcarlo como ocupado y vuelve a tocarlo para liberarlo. Tus clientes verán estas fechas como ocupadas, pero podrán preguntar por disponibilidad de todos modos.</p><div id="calAd"></div><p class="note" id="nOc">Fechas ocupadas: ${lstOc()}</p>`,
  col:()=>logoHtml()+temaHtml()
 };
 function render(){
   $("#tabs").innerHTML=TABS.map(([k,n])=>`<button type="button" class="chip" aria-pressed="${k===tab}" data-tab="${k}">${n}</button>`).join("");
   $("#ed").innerHTML=VISTA[tab]();
   if(tab==="est")D.montajes.forEach(m=>fotos(m.id));
+  if(tab==="cal")calAd=calendario($("#calAd"),{ocupadas:()=>D.ocupadas||[],marcar:true,alElegir:f=>{const l=new Set(D.ocupadas||[]);l.has(f)?l.delete(f):l.add(f);D.ocupadas=[...l].sort();sucio();calAd.refrescar();$("#nOc").textContent="Fechas ocupadas: "+lstOc()}});
 }
 async function fotos(id){
   const el=$("#th-"+id);if(!el)return;

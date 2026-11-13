@@ -44,3 +44,27 @@ export function aplicarTema(t){
   const dark=lum(t.bg)<.45,sf=dark?mix(t.bg,"#ffffff",.08):mix(t.bg,"#ffffff",.65);
   el.textContent=`:root{--ac:${t.ac};--gold:${t.gold};--bg:${t.bg};--ink:${t.ink};--sf:${sf};--on:${lum(t.ac)>.6?"#1b1024":"#ffffff"};--line:${mix(t.bg,t.ink,.16)};--mute:${mix(t.ink,t.bg,.38)};color-scheme:${dark?"dark":"light"}}`;
 }
+
+// ---- Calendario ----
+const MES=["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
+export function calendario(cont,o){
+  let v=o.sel?new Date(o.sel+"T00:00"):new Date();v=new Date(v.getFullYear(),v.getMonth(),1);
+  const iso=(y,m,d)=>`${y}-${String(m+1).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
+  const t=new Date(),hoy=iso(t.getFullYear(),t.getMonth(),t.getDate());
+  function pinta(){
+    const y=v.getFullYear(),m=v.getMonth(),ini=v.getDay(),n=new Date(y,m+1,0).getDate(),oc=o.ocupadas();
+    let c="";for(let i=0;i<ini;i++)c+="<span></span>";
+    for(let d=1;d<=n;d++){
+      const f=iso(y,m,d),ocu=oc.includes(f),pas=o.bloquearPasado&&f<hoy;
+      c+=`<button type="button" class="dia${ocu?" oc":""}${f===o.sel?" sel":""}${f===hoy?" hoy":""}" data-d="${f}"${pas?" disabled":""} aria-label="${d} de ${MES[m]}${ocu?", ocupado":""}">${d}</button>`;
+    }
+    cont.innerHTML=`<div class="cal"><div class="calh"><button type="button" class="btn alt" data-nav="-1" aria-label="Mes anterior">‹</button><b>${MES[m]} ${y}</b><button type="button" class="btn alt" data-nav="1" aria-label="Mes siguiente">›</button></div><div class="calg">${["D","L","M","M","J","V","S"].map(x=>`<small>${x}</small>`).join("")}${c}</div><p class="note"><span class="dot"></span>Fecha ocupada</p></div>`;
+  }
+  cont.onclick=e=>{
+    const b=e.target.closest("button");if(!b)return;
+    if(b.dataset.nav){v=new Date(v.getFullYear(),v.getMonth()+(+b.dataset.nav),1);pinta();return}
+    if(b.dataset.d){if(!o.marcar)o.sel=b.dataset.d;pinta();o.alElegir(b.dataset.d)}
+  };
+  pinta();
+  return {refrescar:pinta};
+}
